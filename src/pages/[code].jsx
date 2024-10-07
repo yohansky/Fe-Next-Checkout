@@ -4,6 +4,9 @@ import localFont from "next/font/local";
 import styles from "@/styles/Home.module.css";
 import Layout from "@/components/Layout";
 import { useRouter } from "next/router";
+import { useEffect, useState } from "react";
+import axios from "axios";
+import constants from "../../constants";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -19,15 +22,31 @@ const geistMono = localFont({
 export default function Home() {
   const router = useRouter();
   const { code } = router.query;
+  const [user, setUser] = useState();
+  const [products, setProducts] = useState([]);
 
-  console.log(code);
+  // console.log(code);
+  useEffect(() => {
+    if (code != undefined) {
+      (async () => {
+        const { data } = await axios.get(`${constants.endpoint}/links/${code}`);
+
+        console.log(data);
+
+        setUser(data.user);
+        setProducts(data.products);
+      })();
+    }
+  }, [code]);
 
   return (
     <Layout>
       <main>
         <div className="py-5 text-center">
           <h2>Welcome</h2>
-          <p className="lead">has invited you to buy these products!</p>
+          <p className="lead">
+            {user?.first_name} {user?.last_name} has invited you to buy these products!
+          </p>
         </div>
 
         <div className="row g-5">
@@ -36,13 +55,25 @@ export default function Home() {
               <span className="text-primary">Products</span>
             </h4>
             <ul className="list-group mb-3">
-              <li className="list-group-item d-flex justify-content-between lh-sm">
-                <div>
-                  <h6 className="my-0">Product name</h6>
-                  <small className="text-muted">Brief description</small>
-                </div>
-                <span className="text-muted">$12</span>
-              </li>
+              {products.map((product) => {
+                return (
+                  <div key={product.id}>
+                    <li className="list-group-item d-flex justify-content-between lh-sm">
+                      <div>
+                        <h6 className="my-0">{product.title}</h6>
+                        <small className="text-muted">{product.description}</small>
+                      </div>
+                      <span className="text-muted">${product.price}</span>
+                    </li>
+                    <li className="list-group-item d-flex justify-content-between lh-sm">
+                      <div>
+                        <h6 className="my-0">Quantity</h6>
+                      </div>
+                      <input type="number" min="0" className="text-muted form-control" style={{ width: "65px" }} />
+                    </li>
+                  </div>
+                );
+              })}
 
               <li className="list-group-item d-flex justify-content-between">
                 <span>Total (USD)</span>

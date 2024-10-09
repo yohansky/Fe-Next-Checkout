@@ -7,6 +7,10 @@ import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import constants from "../../constants";
+import { loadStripe } from "@stripe/stripe-js";
+// import Stripe from "stripe";
+
+var stripe = Stripe("pk_test_51PuD4L07mJ6xZcEwqlZ4ubvBv5G4sEkCC5pc8bIs3n9w9FHpQGfwkvQM0olPogujPu6wtmZez8jo0s9dsceviOlu007gxDw8kx");
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -25,6 +29,13 @@ export default function Home() {
   const [user, setUser] = useState();
   const [products, setProducts] = useState([]);
   const [quantities, setQuantities] = useState([]);
+  const [first_name, setFirstName] = useState("");
+  const [last_name, setLastName] = useState("");
+  const [email, setEmail] = useState("");
+  const [address, setAddress] = useState("");
+  const [country, setCountry] = useState("");
+  const [city, setCity] = useState("");
+  const [zip, setZip] = useState("");
 
   // console.log(code);
   useEffect(() => {
@@ -67,6 +78,35 @@ export default function Home() {
 
       return s + product.price * q.quantity;
     }, 0);
+  };
+
+  const submit = async (e) => {
+    e.preventDefault();
+    // const stripe = loadStripe(constants.stripe_key);
+
+    const { data } = await axios.post(`${constants.endpoint}/orders`, {
+      first_name,
+      last_name,
+      email,
+      address,
+      country,
+      city,
+      zip,
+      code,
+      products: quantities,
+    });
+    console.log("Received Session ID:", data.id);
+
+    const { error } = await stripe.redirectToCheckout({
+      sessionId: String(data.id),
+    });
+    if (error) {
+      console.error("Error redirecting to checkout:", error);
+    }
+
+    // (await stripe).redirectToCheckout({
+    //   sessionId: data.id,
+    // });
   };
 
   return (
@@ -113,61 +153,61 @@ export default function Home() {
           </div>
           <div className="col-md-7 col-lg-8">
             <h4 className="mb-3">Personal Info</h4>
-            <form className="needs-validation" novalidate>
+            <form className="needs-validation" onSubmit={submit}>
               <div className="row g-3">
                 <div className="col-sm-6">
                   <label for="firstName" className="form-label">
                     First name
                   </label>
-                  <input type="text" className="form-control" id="firstName" placeholder="First Name" required />
+                  <input type="text" className="form-control" id="firstName" placeholder="First Name" required onChange={(e) => setFirstName(e.target.value)} />
                 </div>
 
                 <div className="col-sm-6">
                   <label for="lastName" className="form-label">
                     Last name
                   </label>
-                  <input type="text" className="form-control" id="lastName" placeholder="Last Name" required />
+                  <input type="text" className="form-control" id="lastName" placeholder="Last Name" required onChange={(e) => setLastName(e.target.value)} />
                 </div>
 
                 <div className="col-12">
                   <label for="email" className="form-label">
                     Email
                   </label>
-                  <input type="email" className="form-control" id="email" placeholder="you@example.com" required />
+                  <input type="email" className="form-control" id="email" placeholder="you@example.com" required onChange={(e) => setEmail(e.target.value)} />
                 </div>
 
                 <div className="col-12">
                   <label for="address" className="form-label">
                     Address
                   </label>
-                  <input type="text" className="form-control" id="address" placeholder="1234 Main St" required />
+                  <input type="text" className="form-control" id="address" placeholder="1234 Main St" required onChange={(e) => setAddress(e.target.value)} />
                 </div>
 
                 <div className="col-md-5">
                   <label for="country" className="form-label">
                     Country
                   </label>
-                  <input className="form-control" id="country" placeholder="Country" />
+                  <input className="form-control" id="country" placeholder="Country" onChange={(e) => setCountry(e.target.value)} />
                 </div>
 
                 <div className="col-md-4">
                   <label for="city" className="form-label">
                     City
                   </label>
-                  <input className="form-control" id="city" placeholder="City" />
+                  <input className="form-control" id="city" placeholder="City" onChange={(e) => setCity(e.target.value)} />
                 </div>
 
                 <div className="col-md-3">
                   <label for="zip" className="form-label">
                     Zip
                   </label>
-                  <input type="text" className="form-control" id="zip" placeholder="Zip" />
+                  <input type="text" className="form-control" id="zip" placeholder="Zip" onChange={(e) => setZip(e.target.value)} />
                 </div>
               </div>
 
               <hr className="my-4" />
 
-              <button className="w-100 btn btn-primary btn-lg" type="submit">
+              <button role="link" className="w-100 btn btn-primary btn-lg" type="submit">
                 Checkout
               </button>
             </form>

@@ -10,7 +10,7 @@ import constants from "../../constants";
 import { loadStripe } from "@stripe/stripe-js";
 // import Stripe from "stripe";
 
-var stripe = Stripe("pk_test_51PuD4L07mJ6xZcEwqlZ4ubvBv5G4sEkCC5pc8bIs3n9w9FHpQGfwkvQM0olPogujPu6wtmZez8jo0s9dsceviOlu007gxDw8kx");
+var stripe = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLIC_KEY);
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -95,10 +95,15 @@ export default function Home() {
       code,
       products: quantities,
     });
-    console.log("Received Session ID:", data.id);
+    console.log(data);
 
-    const { error } = await stripe.redirectToCheckout({
-      sessionId: String(data.id),
+    const sessionId = data.transaction_id;
+    console.log("Received Session ID:", sessionId);
+
+    const { error } = await (
+      await stripe
+    ).redirectToCheckout({
+      sessionId: sessionId,
     });
     if (error) {
       console.error("Error redirecting to checkout:", error);
